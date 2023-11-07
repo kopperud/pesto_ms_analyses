@@ -1,2 +1,4 @@
 simulated_trees/**/*.tre
 figures/**/*.pdf
+.Rhistory
+history.txt
