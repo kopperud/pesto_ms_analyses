@@ -153,3 +153,4 @@ linkaxes!(axs...)
 fig
 
 CairoMakie.save("figures/eta-estimates-sim.pdf", fig)
+

@@ -4,6 +4,7 @@ using ProgressMeter
 using Printf
 using LaTeXStrings
 using Measures
+using CairoMakie
 
 ##############################
 ##
@@ -43,7 +44,7 @@ model = SSEconstant(λ, μ, η)
 posterior_prior_odds = posterior_prior_shift_odds(model, primates)
 
 n_etas = 50
-ηs = Pesto.lrange(0.0001, 1.0, n_etas)
+ηs = Pesto.lrange(0.0001, 0.7, n_etas)
 models = [SSEconstant(λ, μ, rate) for rate in ηs]
 n_edges = length(primates.branch_lengths)
 
@@ -103,7 +104,7 @@ ax2 = Axis(
         xscale = CairoMakie.log10,
         title = "b)",
         titlealign = :left,
-        yticks = [0,2,4,6,8,10,12,14],
+        yticks = [0,2,4,6,8,10],
         )
 
 l3 = CairoMakie.lines!(ax2, ηs, supported_shifts,

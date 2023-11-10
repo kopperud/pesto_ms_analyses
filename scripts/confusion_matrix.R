@@ -30,6 +30,8 @@ foobar <- function(model_index, tree_height, subdir){
       inferred_netdiv <- tr2@data$mean_netdiv
       true_lambda <- tr1@data$lambda
       inferred_lambda <- tr2@data$mean_lambda
+      true_mu <- tr1@data$mu
+      inferred_mu <- tr2@data$mean_mu
       l2[[i]] <- inferred_netdiv
       n_branches <- nrow(tr2@data)
       r_mse <- mean((true_netdiv - inferred_netdiv)^2)
@@ -65,10 +67,18 @@ foobar <- function(model_index, tree_height, subdir){
         
         n_edges <- nrow(tr1@data)
         
-        log_prop_error <- log(inferred_lambda) - log(true_lambda)
+        log_prop_error_lambda <- log(inferred_lambda) - log(true_lambda)
+        log_prop_error_mu <- log(inferred_mu) - log(true_mu)
+        
         ## geometric mean
-        prop_error_geomean <- exp(mean(log_prop_error))
-        prop_error_mean <- mean(exp(log_prop_error))
+        prop_error_geomean_lambda <- exp(mean(log_prop_error_lambda))
+        ## arithmetic mean
+        prop_error_mean_lambda <- mean(exp(log_prop_error_lambda))
+        
+        ## geometric mean
+        prop_error_geomean_mu <- exp(mean(log_prop_error_mu))
+        ## arithmetic mean
+        prop_error_mean_mu <- mean(exp(log_prop_error_mu))
         
         df5 <- tibble(
           "model" = model_index,
@@ -87,8 +97,10 @@ foobar <- function(model_index, tree_height, subdir){
           "true positive rate" = tp / pos,
           "false negative rate" = fn / pos,
           "true negative rate" = tn / neg,
-          "prop_error_geomean" = prop_error_geomean,
-          "prop_error_mean" = prop_error_mean,
+          "prop_error_geomean_lambda" = prop_error_geomean_lambda,
+          "prop_error_mean_lambda" = prop_error_mean_lambda,
+          "prop_error_geomean_mu" = prop_error_geomean_mu,
+          "prop_error_mean_mu" = prop_error_mean_mu,
           "criterion" = criteria[m]
         )
         ls5[[m]] <- df5

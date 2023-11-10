@@ -65,7 +65,7 @@ for (i, inference) in enumerate(inferences)
                 :model  =>    x -> x .== j
             )
             x = collect(df4[!,:ntaxa])
-            y = collect(df4[!,:prop_error_geomean])
+            y = collect(df4[!,:prop_error_geomean_lambda])
             scatter!(ax, x, y, markersize = 7,
                     strokewidth = 0.5,
                     label = LaTeXString(string(Int64(tree_heights[q])) * raw" Ma"))
@@ -113,8 +113,99 @@ fig
 
 CairoMakie.save("figures/proportional-error-lambda.pdf", fig)
 
+##################################
+##
+##   Do the equivalent but for extinction rates
+##
+####################################
+
+#yt = lrange(0.125, 8.0, 5)
+#yt = round.(lrange(0.1, 10.0, 5); digits = 2)
+yt = round.(lrange(0.111111111111, 9.0, 5); digits = 2)
+fig = Figure(resolution = (650, 370), fontsize = 14, 
+            figure_padding = (1,1,1,1))
+axs = []
+for (i, inference) in enumerate(inferences)
+    for j in 1:n_models
+        if i == 1
+            title = titles[j]
+        else
+            title = ""
+        end
+        ax = Axis(fig[i,j+1], 
+                    xscale = Makie.log10,
+                    yscale = Makie.log10,
+                    xgridvisible = false,
+                    ygridvisible = false,
+                    topspinevisible = false,
+                    title = title,
+                    yticks = yt,
+                    rightspinevisible = false)
+        CairoMakie.ylims!(ax, 0.05, 16.0)
+        if j > 1
+            hideydecorations!(ax, ticks = false)
+        end
+        if i < 3
+            hidexdecorations!(ax, ticks = false)
+        end
+
+        for (q, h) in enumerate(tree_heights)
+            #println("$i $j $h")
+            df4 = subset(
+                df,
+                :criterion => x -> x .== "N_over_half",
+                :inference => x -> x .== inference,
+                :height =>    x -> x .== h,
+                :model  =>    x -> x .== j
+            )
+            x = collect(df4[!,:ntaxa])
+            y = collect(df4[!,:prop_error_geomean_mu])
+            scatter!(ax, x, y, markersize = 7,
+                    strokewidth = 0.5,
+                    label = LaTeXString(string(Int64(tree_heights[q])) * raw" Ma"))
+        end
+        CairoMakie.lines!(ax, [extrema(df[!,:ntaxa])...], 
+                        [1.0, 1.0], label = L"\text{no error}",
+                         color = :red, linewidth = 2, linestyle = :dash)
+
+        append!(axs, [ax])
+    end
+end
+linkaxes!(axs...)
+
+## fake LABELS
+ylabel = Label(fig[1:3, 1], L"\text{proportional error (extinction rate)}", rotation = π/2)
+xlabel = Label(fig[4, 2:5], L"\text{number of taxa}")
+
+
+xlabel = Label(fig[0, 2:5], L"\text{allowed rate variation}")
+ylabel = Label(fig[1, 6], L"\text{true}~𝛌,𝛍,\eta", rotation = π/2)
+ylabel = Label(fig[2, 6], L"\text{true}~𝛌,𝛍", rotation = π/2)
+ylabel = Label(fig[3, 6], L"\text{unknown}~𝛌,𝛍,\eta", rotation = π/2)
 
 ##
+fig[1:3, 7] = Legend(fig, axs[1], "", framevisible = false, patchsize = (30, 30))
+colsize!(fig.layout, 7, Relative(0.2))
+colgap!(fig.layout, 7)
+rowgap!(fig.layout, 7)
+
+rowsize!(fig.layout, 0, Relative(0.05))
+#rowsize!(fig.layout, 1, Relative(0.05))
+for i in 1:3
+    rowsize!(fig.layout, i, Relative(0.85/3))
+end
+rowsize!(fig.layout, 4, Relative(0.05))
+fig
+
+CairoMakie.save("figures/proportional-error-mu.pdf", fig)
+
+
+###########################################
+##
+##    Figure 11 -- false error ratios/accuracy
+## 
+###########################################
+
 
 fig = Figure(resolution = (450, 150), fontsize = 14, 
             figure_padding = (1,1,1,1))
@@ -212,3 +303,5 @@ ax = Axis(fig[1,1],
         #yscale = Makie.log10)
 scatter!(ax, df_empirical_bayes[!,:ntaxa], fpr)
 fig
+
+

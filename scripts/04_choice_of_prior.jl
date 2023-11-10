@@ -54,7 +54,7 @@ names_latex = [
 
 n = 10
 
-λml, μml = estimate_constant_bdp(data)
+λml, μml = estimate_constant_bdp(primates)
 sd = sqrt(0.047052640552039185)
 αλ = 1 / ((sd/λml)^2)
 θλ = λml/αλ
@@ -89,7 +89,7 @@ for (dλ, dμ) in zip(λdistributions, μdistributions)
 
     λ, μ = allpairwise(λquantiles, µquantiles)
 
-    η = optimize_eta(λ, µ, data)
+    η = optimize_eta(λ, µ, primates)
     model = SSEconstant(λ, μ, η)
     append!(models, [model])
 end
@@ -102,7 +102,14 @@ end
 nshifts = [
     sum(rates[i][!,:nshift]) for i in 1:4
 ]
-
+bfactors = [
+    rates[i][!,:shift_bf] for i in 1:4
+]
+[maximum(x[1:end-1]) for x in bfactors]
+strong_supported_bf = [
+    sum(bfactors[i] .> 10) for i in 1:4
+]
+rates[3][rates[3][!,:shift_bf] .> 10, :]
 
 fig = Figure(resolution=(650, 300), fontsize = 14,
             figure_padding = (5,15,5,5))
