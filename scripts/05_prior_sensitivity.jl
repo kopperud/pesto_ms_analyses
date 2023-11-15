@@ -82,76 +82,49 @@ branch_rates = zeros(length(ns), 464)
     branch_rates[i,:] .= branchrates(primates, n)
 end
 
-fig = Figure(resolution=(850, 300), fontsize = 14,
+fig = Figure(resolution=(550, 300), fontsize = 14,
             figure_padding = (0,0,0,0))
-
 
 ax1 = Axis(fig[1,1],
         rightspinevisible = false,
         topspinevisible = false,
-        xgridvisible = false, 
-        ygridvisible = false,
-        xscale = Makie.log10,
-        yscale = Makie.log10,
-        title = "a)",
-        titlealign = :left,
-        xticklabelrotation = π/2,
-        xticks = round.(ηtl; digits = 2),
-        yticks = round.(ηtl; digits = 2),
-        ylabel = L"\text{estimated number of shifts}~(\hat{N})",
-        xlabel = L"\text{expected number of shifts}~(E[N] = \eta t)")
-CairoMakie.scatter!(ax1, ηtl, Nhats, label = "shifts", color = :black, markerstrokewidth = 1)
-CairoMakie.lines!(ax1, ηtl, Nhats, label = "shifts", color = :black)
-CairoMakie.lines!(ax1, [1.0, 100.0], [1.0, 100.0], label = "identity line", color = :black, linestyle = :dash)
-λml, μml = estimate_constant_bdp(primates)
-H = 0.587
-dλ = LogNormal(log(λml), H)
-dμ = LogNormal(log(μml), H)
-λquantiles = make_quantiles(dλ, 10)
-µquantiles = make_quantiles(dμ, 10)
-λ, μ = allpairwise(λquantiles, µquantiles)
-ηml = optimize_eta(λ,μ, primates)
-CairoMakie.scatter!(ax1, [ηml*tl], [foobaz(primates, ηml)], label = "MLE", color = :red, markerstrokewidth = 1)
-
-CairoMakie.axislegend(ax1, merge = true, unique = true, position = :lt)
-
-ax2 = Axis(fig[1,2],
-        rightspinevisible = false,
-        topspinevisible = false,
         xgridvisible = false,
         ygridvisible = false,
-        title = "b)",
+        title = "a)",
         titlealign = :left,
         xscale = Makie.sqrt,
         xticklabelrotation = π/2,
         xticks = ns.^2,
         ylabel = L"\text{estimated number of shifts}~(\hat{N})",
-        xlabel = L"\text{no. rate categories}~(n^2 = K)")
-CairoMakie.ylims!(ax2, 0.0, 6.2)
-CairoMakie.scatter!(ax2, ns.^2, Ns[:,1], label = "primates", color = :black, markerstrokewidth = 1)
-CairoMakie.lines!(ax2, ns.^2, Ns[:,1], label = "", color = :black)
+        #xlabel = L"\text{no. rate categories}~(n^2 = K)"
+        )
+CairoMakie.ylims!(ax1, 0.0, 6.2)
+CairoMakie.scatter!(ax1, ns.^2, Ns[:,1], label = "primates", color = :black, markerstrokewidth = 1)
+CairoMakie.lines!(ax1, ns.^2, Ns[:,1], label = "", color = :black)
 
-ax3 = Axis(fig[1,3],
+ax2 = Axis(fig[1,2],
         rightspinevisible = false,
         topspinevisible = false,
         xgridvisible = false, 
         ygridvisible = false,
-        title = "c)",
+        title = "b)",
         titlealign = :left,
         #xscale = Makie.sqrt,
         #yscale = Makie.log10,
         xticklabelrotation = π/2,
         xticks = (ns, string.(ns.^2)),
-        xlabel = L"\text{no. rate categories}~(n^2 = K)",
+#        xlabel = L"\text{no. rate categories}~(n^2 = K)",
         ylabel = L"\text{net diversification rate}~(\bar{r})")
 
+xlabel = Label(fig[2,1:2], L"\text{no. rate categories}~(n^2 = K)")
+rowgap!(fig.layout, 0)
 
 colors = ["black", "gray", "black", "gray","black", "gray","black", "gray", "black"]
 #colors = repeat([:steelblue], 9)
 xs = vcat([repeat([i], 464) for i in ns]...)
 cs = vcat([repeat([i], 464) for i in colors]...)
 
-CairoMakie.rainclouds!(ax3, xs, vcat(branch_rates'...), 
+CairoMakie.rainclouds!(ax2, xs, vcat(branch_rates'...), 
             color = cs, label = "Posterior",
                 clouds=nothing,
                 plot_boxplots = false,
@@ -160,8 +133,8 @@ CairoMakie.rainclouds!(ax3, xs, vcat(branch_rates'...),
                 markersize=4)
 fig
 
-for i in 1:3
-    colsize!(fig.layout, i, Relative(1/3))
+for i in 1:2
+    colsize!(fig.layout, i, Relative(1/2))
 end
 fig
 CairoMakie.save("figures/state_and_eta_sensitivity.pdf", fig)
