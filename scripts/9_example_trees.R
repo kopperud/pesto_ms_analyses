@@ -11,7 +11,7 @@ tr2 <- read.beast.newick("simulated_trees/results/true_all/s1_h125.0_m4_6.tre")
 tr3 <- read.beast.newick("simulated_trees/results/true_div/s1_h125.0_m4_6.tre")
 tr4 <- read.beast.newick("simulated_trees/results/unknown_rates/s1_h125.0_m4_6.tre")
 
-  
+
 make_shiftplot <- function(tr, limits){
   if ("N" %in% colnames(tr@data)){
     tr@data$nshift <- sapply(tr@data$N, sum)
@@ -26,11 +26,11 @@ make_shiftplot <- function(tr, limits){
 
 make_divplot <- function(tr, limits){
   if ("mean_netdiv" %in% colnames(tr@data)){
-    tr@data$r <- tr@data$mean_netdiv  
+    tr@data$r <- tr@data$mean_netdiv
   }
   ## net-diversification rate
   p <- ggtree(tr, aes(color = r)) +
-    
+
     scale_colour_gradient("", low = "gray", high = "#619CFF", limits = limits) +
     theme(legend.pos = c(0.125, 0.875))
   #ggtitle()
@@ -54,7 +54,7 @@ r_min_max <- c(
   max(max(tr1@data$r), max(tr2@data$mean_netdiv))
 )
 
-## good trees 
+## good trees
 ## 6, 22 (100 Ma)
 p1a <- make_shiftplot(tr1, min_max) + ggtitle("true shifts")
 p1b <- make_shiftplot(tr2, min_max) + ggtitle("inferred shifts")
@@ -79,7 +79,7 @@ min_max <- c(
   max(1, max(tr2@data$nshift))
 )
 
-## good trees 
+## good trees
 ## 6, 22 (100 Ma)
 r_min_max <- c(
   min(min(tr1@data$r), min(tr2@data$mean_netdiv)),
@@ -103,3 +103,15 @@ tr2@data[tr2@data$shift_bf > 10,]
 tr1@data[sapply(tr1@data$N, sum) > 0.5,]
 
 ggsave("figures/tree_examples.pdf", height = 225, width = 270, units = "mm")
+
+
+
+## calculate the netdivs
+r1 <- c(0.04, 0.05, 0.06)
+r2 <- c(0.04, 0.08, 0.12)
+
+#rowSums()
+Nsum <- matrix(Reduce("+", tr1@data$N), 3,3)
+
+Nsum
+

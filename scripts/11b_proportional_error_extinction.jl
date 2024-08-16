@@ -1,0 +1,130 @@
+using CSV
+using DataFrames
+using CairoMakie
+using LaTeXStrings
+
+function lrange(from::Float64, to::Float64, length::Int64 = 6)
+    exp.(collect(range(log(from), log(to); length = length)))
+end
+
+
+df = CSV.read("output/branch_specific_estimation_error.csv", DataFrame,
+                missingstring=["NA", "NAN", "NULL"])
+
+
+tree_heights = [25, 50, 75, 100, 125]
+rate_variation = ["tiny", "small", "moderate", "large"]
+inferences = ["true_all", "true_div", "unknown_rates"]
+
+n_models = length(rate_variation)
+n_heights = length(tree_heights)
+n_inferences = length(inferences)
+
+titles = [
+    L"\text{tiny var.}",
+    L"\text{small var.}",
+    L"\text{moderate var.}",
+    L"\text{large var.}"
+]
+
+##################################
+##
+##   Do the equivalent but for extinction rates
+##
+####################################
+
+#yt = lrange(0.125, 8.0, 5)
+#yt = round.(lrange(0.1, 10.0, 5); digits = 2)
+yt = round.(lrange(0.111111111111, 9.0, 5); digits = 2)
+fig = Figure(size = (650, 370), fontsize = 14, 
+            figure_padding = (1,1,1,1))
+axs = []
+
+####################
+##
+## trees without any rate shifts
+##
+###################
+for (i, inference) in enumerate(inferences)
+    for j in 1:n_models
+        if i == 1
+            title = titles[j]
+        else
+            title = ""
+        end
+        ax = Axis(fig[i,j+1], 
+                    xscale = Makie.log10,
+                    yscale = Makie.log10,
+                    xgridvisible = false,
+                    ygridvisible = false,
+                    topspinevisible = false,
+                    title = title,
+                    yticks = yt,
+                    rightspinevisible = false)
+        CairoMakie.ylims!(ax, 0.05, 16.0)
+        if j > 1
+            hideydecorations!(ax, ticks = false)
+        end
+        if i < 3
+            hidexdecorations!(ax, ticks = false)
+        end
+
+        for (q, h) in enumerate(tree_heights)
+            #println("$i $j $h")
+            df4 = subset(
+                df,
+                :criterion => x -> x .== "N_over_half",
+                :inference => x -> x .== inference,
+                :height =>    x -> x .== h,
+                :model  =>    x -> x .== j
+            )
+            x = collect(df4[!,:ntaxa])
+            y = collect(df4[!,:prop_error_geomean_mu])
+            scatter!(ax, x, y, markersize = 7,
+                    strokewidth = 0.5,
+                    label = LaTeXString(string(Int64(tree_heights[q])) * raw" Ma"))
+        end
+        CairoMakie.lines!(ax, [extrema(df[!,:ntaxa])...], 
+                        [1.0, 1.0], label = L"\text{no error}",
+                         color = :red, linewidth = 2, linestyle = :dash)
+
+        append!(axs, [ax])
+    end
+end
+
+####################
+##
+## trees with at least one rate shifts
+##
+###################
+
+
+linkaxes!(axs...)
+
+## fake LABELS
+ylabel = Label(fig[2:8, 1], L"\text{proportional error (extinction rate)}", rotation = π/2)
+xlabel = Label(fig[9, 2:5], L"\text{number of taxa}")
+
+
+xlabel = Label(fig[1, 2:5], L"\text{allowed rate variation}")
+ylabel = Label(fig[2, 6], L"\text{true}~𝛌,𝛍,\eta", rotation = π/2)
+ylabel = Label(fig[3, 6], L"\text{true}~𝛌,𝛍", rotation = π/2)
+ylabel = Label(fig[4, 6], L"\text{unknown}~𝛌,𝛍,\eta", rotation = π/2)
+
+##
+fig[1:3, 7] = Legend(fig, axs[1], "", framevisible = false, patchsize = (30, 30))
+colsize!(fig.layout, 7, Relative(0.2))
+colgap!(fig.layout, 7)
+rowgap!(fig.layout, 7)
+
+rowsize!(fig.layout, 0, Relative(0.05))
+#rowsize!(fig.layout, 1, Relative(0.05))
+for i in 1:3
+    rowsize!(fig.layout, i, Relative(0.85/3))
+end
+rowsize!(fig.layout, 4, Relative(0.05))
+fig
+
+CairoMakie.save("figures/proportional-error-mu.pdf", fig)
+
+

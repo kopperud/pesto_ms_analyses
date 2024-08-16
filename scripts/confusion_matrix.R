@@ -80,6 +80,11 @@ foobar <- function(model_index, tree_height, subdir){
         ## arithmetic mean
         prop_error_mean_mu <- mean(exp(log_prop_error_mu))
         
+        ## arithmetic mean netdiv
+        true_netdiv <- true_lambda - true_mu
+        inferred_netdiv <- inferred_lambda - inferred_mu
+        arithmetic_error_netdiv <- mean(inferred_netdiv - true_netdiv)
+        
         df5 <- tibble(
           "model" = model_index,
           "inference" = subdir,
@@ -101,6 +106,7 @@ foobar <- function(model_index, tree_height, subdir){
           "prop_error_mean_lambda" = prop_error_mean_lambda,
           "prop_error_geomean_mu" = prop_error_geomean_mu,
           "prop_error_mean_mu" = prop_error_mean_mu,
+          "arithmetic_error_netdiv" = arithmetic_error_netdiv,
           "criterion" = criteria[m]
         )
         ls5[[m]] <- df5

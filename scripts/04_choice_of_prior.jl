@@ -8,15 +8,16 @@ using Plots.PlotMeasures
 primates_tree = readtree(Pesto.path("primates.tre"))
 primates = SSEdata(primates_tree, 0.635)
 
-H = 0.587
+H = 0.587405
 
 λml, μml = estimate_constant_bdp(primates)
-sd = sqrt(0.047052640552039185)
-αλ = 1 / ((sd/λml)^2)
-θλ = λml/αλ
-sd = sqrt(0.02423315598066682)
-αμ = 1 / ((sd/μml)^2)
-θμ = μml/αμ
+v = (exp(H^2) - 1)* exp(2*log(λml) + H^2) ## variance of the lognormal
+θλ = v / λml
+αλ = λml / θλ
+v = (exp(H^2) - 1)* exp(2*log(μml) + H^2) ## variance of the lognormal
+θμ = v / μml
+αμ = μml / θμ
+
 
 order = 1
 aλ = λml * log(10^order)/(10^order - 1)
@@ -55,12 +56,13 @@ names_latex = [
 n = 10
 
 λml, μml = estimate_constant_bdp(primates)
-sd = sqrt(0.047052640552039185)
-αλ = 1 / ((sd/λml)^2)
-θλ = λml/αλ
-sd = sqrt(0.02423315598066682)
-αμ = 1 / ((sd/μml)^2)
-θμ = μml/αμ
+v = (exp(H^2) - 1)* exp(2*log(λml) + H^2)
+θλ = v / λml
+αλ = λml / θλ
+v = (exp(H^2) - 1)* exp(2*log(μml) + H^2)
+θμ = v / μml
+αμ = μml / θμ
+
 
 order = 10
 aλ = λml * log(order)/(order-1)
@@ -94,6 +96,7 @@ for (dλ, dμ) in zip(λdistributions, μdistributions)
     append!(models, [model])
 end
 
+
 ## Number of shifts
 rates = Dict()
 for (i, model) in enumerate(models)
@@ -109,7 +112,8 @@ bfactors = [
 strong_supported_bf = [
     sum(bfactors[i] .> 10) for i in 1:4
 ]
-rates[3][rates[3][!,:shift_bf] .> 10, :]
+
+rates[4][rates[4][!,:shift_bf] .> 10, :]
 
 fig = Figure(resolution=(650, 300), fontsize = 14,
             figure_padding = (5,15,5,5))

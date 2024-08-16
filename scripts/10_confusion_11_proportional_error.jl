@@ -62,7 +62,8 @@ for (i, inference) in enumerate(inferences)
                 :criterion => x -> x .== "N_over_half",
                 :inference => x -> x .== inference,
                 :height =>    x -> x .== h,
-                :model  =>    x -> x .== j
+                :model  =>    x -> x .== j,
+                :N_true_sum => x -> x .> 0,
             )
             x = collect(df4[!,:ntaxa])
             y = collect(df4[!,:prop_error_geomean_lambda])
@@ -122,7 +123,7 @@ CairoMakie.save("figures/proportional-error-lambda.pdf", fig)
 #yt = lrange(0.125, 8.0, 5)
 #yt = round.(lrange(0.1, 10.0, 5); digits = 2)
 yt = round.(lrange(0.111111111111, 9.0, 5); digits = 2)
-fig = Figure(resolution = (650, 370), fontsize = 14, 
+fig = Figure(size = (650, 370), fontsize = 14, 
             figure_padding = (1,1,1,1))
 axs = []
 for (i, inference) in enumerate(inferences)
@@ -207,7 +208,7 @@ CairoMakie.save("figures/proportional-error-mu.pdf", fig)
 ###########################################
 
 
-fig = Figure(resolution = (450, 150), fontsize = 14, 
+fig = Figure(size = (450, 150), fontsize = 14, 
             figure_padding = (1,1,1,1))
 
 axs = []
@@ -305,3 +306,87 @@ scatter!(ax, df_empirical_bayes[!,:ntaxa], fpr)
 fig
 
 
+## plot metrics by tree size
+
+
+fig5 = Figure(size = (600, 400));
+
+yt = [0.0, 0.25, 0.50, 0.75, 1.0]
+
+xs = [1,2,3,4]
+xtl = ["(0,50]", "(50,250]", "(250,1000]", "(1000,∞]"]
+
+ax1 = Axis(fig5[1,1], 
+        ylabel = L"\text{mean accuracy}",
+        xgridvisible = false,
+        ygridvisible = false,
+        topspinevisible = false,
+        yticks = yt,
+        xticks = (xs, xtl),
+        xticklabelrotation = pi/2,
+        rightspinevisible = false)
+ax2 = Axis(fig5[1,2], 
+        ylabel = L"\text{mean false positive ratio}",
+        xgridvisible = false,
+        ygridvisible = false,
+        topspinevisible = false,
+        xticks = (xs, xtl),
+        #yticks = yt,
+        xticklabelrotation = pi/2,
+        rightspinevisible = false)
+ax3 = Axis(fig5[1,3], 
+        ylabel = L"\text{mean false negative ratio}",
+        xgridvisible = false,
+        ygridvisible = false,
+        topspinevisible = false,
+        yticks = yt,
+        xticks = (xs, xtl),
+        xticklabelrotation = pi/2,
+        rightspinevisible = false)
+        
+ylims!(ax1, (0.0, 1.0))
+#ylims!(ax2, (0.0, 0.001))
+ylims!(ax3, (0.0, 1.0))
+
+
+function metrics(df, ntaxa_lower, ntaxa_upper)
+    df = deepcopy(df)
+    df = subset(df,
+        :ntaxa =>  x -> x .> ntaxa_lower,
+    )
+    df = subset(df,
+        :ntaxa =>  x -> x .<= ntaxa_upper,
+    )
+
+    fp = df[!,"false positive"]
+    fn = df[!,"false negative"]
+    tp = df[!,"true positive"]
+    tn = df[!,"true negative"]
+    fpr = fp ./ (fp .+ tn)
+    fnr = fn ./ (tp .+ fn)
+
+    fnr = fnr[.!isnan.(fnr)]
+
+    acc = (tp .+ tn) ./ (tp .+ tn .+ fp .+ fn)
+
+    mean_acc = mean(acc)
+    mean_fpr = mean(fpr)
+    mean_fnr = mean(fnr)
+
+    return(mean_acc, mean_fpr, mean_fnr)
+end
+
+ymetrics = zeros(4,3)
+
+ymetrics[1,:] .= metrics(df_empirical_bayes, 0.0, 50.0)
+ymetrics[2,:] .= metrics(df_empirical_bayes, 50.0, 250.0)
+ymetrics[3,:] .= metrics(df_empirical_bayes, 250.0, 1000.0)
+ymetrics[4,:] .= metrics(df_empirical_bayes, 1000.0, 1e20)
+
+barplot!(ax1, xs, ymetrics[:,1], color = "gray")
+barplot!(ax2, xs, ymetrics[:,2], color = "gray")
+barplot!(ax3, xs, ymetrics[:,3], color = "gray")
+
+ylabel = Label(fig5[2, 1:3], L"\text{tree size (tips)}")
+fig5
+CairoMakie.save("figures/metrics-with-tree-size.pdf", fig5)

@@ -2,11 +2,17 @@
 using Distributions
 using LaTeXStrings
 using CairoMakie
-import Pesto
+using Pesto
 
 H = 0.587
-dλ = LogNormal(log(0.30), H)
-dμ = LogNormal(log(0.22), H)
+phy = readtree("data/primates.tre")
+primates = SSEdata(phy, 0.635)
+λml, µml = estimate_constant_bdp(primates)
+
+#dλ = LogNormal(log(0.30), H)
+#dμ = LogNormal(log(0.22), H)
+dλ = LogNormal(log(λml), H)
+dμ = LogNormal(log(µml), H)
 n = 6
 
 fig = Figure(resolution = (320, 220), 
@@ -53,7 +59,7 @@ ax3 = Axis(fig[2,1],
 
 λs, μs = Pesto.allpairwise(λquantiles, μquantiles)
 CairoMakie.plot!(ax3, λs, μs, color = "black", markersize = 8)
-CairoMakie.plot!(ax3, [0.30], [0.22], color = "red", 
+CairoMakie.plot!(ax3, [λml], [µml], color = "red", 
                 label = "MLE simple model",
                 markersize = 8)
 

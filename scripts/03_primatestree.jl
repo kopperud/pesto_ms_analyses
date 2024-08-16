@@ -4,6 +4,7 @@ using StatsPlots
 using Pesto
 using Optim
 using LaTeXStrings
+using CSV
 
 ##############################
 ##
@@ -41,6 +42,7 @@ println(λml, "\t", μml, "\t", η)
 model = SSEconstant(λ, μ, η)
 
 rates = birth_death_shift(model, primates)
+writenewick("output/primates_pesto.tre", primates, rates)
 
 ##############################
 ##
@@ -59,13 +61,14 @@ library(dplyr)
 
 x <- as_tibble(primates)
 phydf <- merge(x, rates, by = "node")
+phydf$tip.label <- phydf$label
 th <- max(node.depth.edgelength(primates))
 
 td_phy <- as.treedata(phydf)
 
 td_phy@phylo$tip.label <- gsub("_", " ", td_phy@phylo$tip.label)
 
-scalexformat <- function(x) sprintf("%.0f Ma", th - abs(round(x, 0)))
+scalexformat <- function(x) sprintf("%.0f Ma", abs(th - round(x, 0)))
 
 bgcolor="white"
 fgcolor="black"
@@ -87,6 +90,8 @@ p2 <- ggtree(td_phy, aes(color = `mean_lambda`), size = 1) +
     scale_colour_gradient(low = "black", high = "#56B1F7", name = "b) Speciation rate") +
     ggtree::geom_cladelab(node = 386, label = "Cercopithecidae", 
                           offset = 0.5, offset.text = 1, angle = 90, hjust = 0.5)  +
+    #ggtree::geom_cladelab(node = 619, label = "Cercopithecidae", 
+    #                      offset = 0.5, offset.text = 1, angle = 90, hjust = 0.5)  +
     scale_x_continuous(labels = scalexformat, breaks=seq(0,th, length.out = 5), 
                         limits = c(0, th+4)) 
 
@@ -99,5 +104,5 @@ pc <- (p1 | p2) &
     legend.background = element_blank()
         )
 
-ggsave("figures/primates_shift_lambda.pdf", pc, width = 200, height = 120, units = "mm")
+ggsave("figures/primates_shift_lambda_tips.pdf", pc, width = 200, height = 120, units = "mm")
 """;

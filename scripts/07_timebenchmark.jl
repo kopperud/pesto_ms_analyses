@@ -155,6 +155,7 @@ sds = sqrt.(vars)
 
 
 for q in 1:4
+#for q in [1,2]
     StatsPlots.plot!(p, xs[:,q], ys[:,q], yscale = :log10, 
             yerror = interquart[:,q], 
             label = labels[q], color = cls[q], linewidth = 2)

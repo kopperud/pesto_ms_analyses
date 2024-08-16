@@ -91,11 +91,9 @@ savefig(p3, "figures/N_prior_distribution.pdf")
 
 mean(event_rates2)
 mean(event_rates)
-
-using Statistics
-using HypothesisTests
-
-ApproximateTwoSampleKSTest(event_rates, event_rates2)
+#using Statistics
+#using HypothesisTests
+#ApproximateTwoSampleKSTest(event_rates, event_rates2)
 
 
 
