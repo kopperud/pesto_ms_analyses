@@ -94,7 +94,7 @@ for q in 1:2
                   xgridvisible = false, 
                   ygridvisible = false,
                   rightspinevisible = false,
-                  title = title,
+                  #title = title,
                   #xticks = xt,
                   #xlabel = L"\text{number of taxa}", 
                   )
@@ -147,6 +147,7 @@ for q in 1:2
                   xgridvisible = false, 
                   ygridvisible = false,
                   rightspinevisible = false,
+                  title = title,
                   #xticks = xt,
                   #xlabel = L"\text{number of taxa}", 
                 )
