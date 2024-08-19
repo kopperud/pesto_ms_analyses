@@ -27,7 +27,40 @@ titles = [
     L"\text{large var.}"
 ]
 
-yt = lrange(0.25, 4.0, 5)
+## quick histogram
+fighist = Figure()
+
+df_hist = subset(
+    df,
+    :criterion => x -> x .== "N_over_half",
+    :inference => x -> x .== "unknown_rates",
+    #:height =>    x -> x .== h,
+    #:model  =>    x -> x .== j,
+    #:N_true_sum => x -> x .== 0,
+   )
+ax = Axis(fighist[1,1],
+          xlabel = L"\text{mean error netdiv }(r_\text{estimated} - r_\text{true})",
+          ylabel = L"\text{number of trees}"
+          )
+hist!(ax, df_hist[!,:arithmetic_error_netdiv], bins = 50)
+df_hist[df_hist[!,:arithmetic_error_netdiv] .< -0.25,:]
+
+fighist
+
+
+##################################
+##
+##   plot errors in net-diversification rate
+##
+####################################
+
+## omit those pesky r = -0.61 
+df = subset(
+            df,
+            :arithmetic_error_netdiv => x -> x .> -0.25,
+           )
+
+yt = round.(lrange(0.111111111111, 9.0, 5); digits = 2)
 fig = Figure(size = (650, 620), fontsize = 14, 
             figure_padding = (1,1,1,1))
 axs = []
@@ -46,14 +79,14 @@ for (i, inference) in enumerate(inferences)
         end
         ax = Axis(fig[i+1,j+1], 
                     xscale = Makie.log10,
-                    yscale = Makie.log10,
+                    #yscale = Makie.log10,
                     xgridvisible = false,
                     ygridvisible = false,
                     topspinevisible = false,
                     #title = title,
-                    yticks = yt,
+                    #yticks = yt,
                     rightspinevisible = false)
-        CairoMakie.ylims!(ax, 0.2, 7.0)
+        #CairoMakie.ylims!(ax, 0.05, 16.0)
         if j > 1
             hideydecorations!(ax, ticks = false)
         end
@@ -62,6 +95,7 @@ for (i, inference) in enumerate(inferences)
         end
 
         for (q, h) in enumerate(tree_heights)
+            #println("$i $j $h")
             df4 = subset(
                 df,
                 :criterion => x -> x .== "N_over_half",
@@ -71,14 +105,12 @@ for (i, inference) in enumerate(inferences)
                 :N_true_sum => x -> x .== 0,
             )
             x = collect(df4[!,:ntaxa])
-            y = collect(df4[!,:prop_error_geomean_lambda])
+            y = collect(df4[!,:arithmetic_error_netdiv])
             scatter!(ax, x, y, markersize = 7,
                     strokewidth = 0.5,
                     label = LaTeXString(string(Int64(tree_heights[q])) * raw" Ma"))
         end
-        CairoMakie.lines!(ax, [extrema(df[!,:ntaxa])...], 
-                        [1.0, 1.0], label = L"\text{no error}",
-                         color = :red, linewidth = 2, linestyle = :dash)
+        CairoMakie.lines!(ax, [extrema(df[!,:ntaxa])...], [0.0, 0.0], label = L"\text{no error}", color = :red, linewidth = 2, linestyle = :dash)
 
         append!(axs, [ax])
     end
@@ -96,17 +128,16 @@ for (i, inference) in enumerate(inferences)
         else
             title = ""
         end
-    
         ax = Axis(fig[i+5,j+1], 
                     xscale = Makie.log10,
-                    yscale = Makie.log10,
+                    #yscale = Makie.log10,
                     xgridvisible = false,
                     ygridvisible = false,
                     topspinevisible = false,
                     title = title,
-                    yticks = yt,
+                    #yticks = yt,
                     rightspinevisible = false)
-        CairoMakie.ylims!(ax, 0.2, 7.0)
+        #CairoMakie.ylims!(ax, 0.05, 16.0)
         if j > 1
             hideydecorations!(ax, ticks = false)
         end
@@ -115,6 +146,7 @@ for (i, inference) in enumerate(inferences)
         end
 
         for (q, h) in enumerate(tree_heights)
+            #println("$i $j $h")
             df4 = subset(
                 df,
                 :criterion => x -> x .== "N_over_half",
@@ -124,24 +156,23 @@ for (i, inference) in enumerate(inferences)
                 :N_true_sum => x -> x .> 0,
             )
             x = collect(df4[!,:ntaxa])
-            y = collect(df4[!,:prop_error_geomean_lambda])
+            y = collect(df4[!,:arithmetic_error_netdiv])
             scatter!(ax, x, y, markersize = 7,
                     strokewidth = 0.5,
                     label = LaTeXString(string(Int64(tree_heights[q])) * raw" Ma"))
         end
-        CairoMakie.lines!(ax, [extrema(df[!,:ntaxa])...], 
-                        [1.0, 1.0], label = L"\text{no error}",
-                         color = :red, linewidth = 2, linestyle = :dash)
+        CairoMakie.lines!(ax, [extrema(df[!,:ntaxa])...], [0.0, 0.0], label = L"\text{no error}", color = :red, linewidth = 2, linestyle = :dash)
 
         append!(axs, [ax])
     end
 end
 
 
+
 linkaxes!(axs...)
 
 ## fake LABELS
-ylabel = Label(fig[2:8, 1], L"\text{proportional error (speciation rate)}", rotation = π/2)
+ylabel = Label(fig[2:8, 1], L"\text{branch specific estimation error in net diversification }(r_\text{estimated}-r_\text{true})", rotation = π/2)
 title1 = Label(fig[1, 2:5], L"\text{a) Simulated trees without rate shifts}")
 title2 = Label(fig[5, 2:5], L"\text{b) Simulated trees with }\geq \text{1 rate shifts}", justification = :bottom)
 
@@ -156,8 +187,6 @@ ylabel = Label(fig[4, 6], L"\text{unknown}~𝛌,𝛍,\eta", rotation = π/2)
 ylabel = Label(fig[6, 6], L"\text{true}~𝛌,𝛍,\eta", rotation = π/2)
 ylabel = Label(fig[7, 6], L"\text{true}~𝛌,𝛍", rotation = π/2)
 ylabel = Label(fig[8, 6], L"\text{unknown}~𝛌,𝛍,\eta", rotation = π/2)
-
-
 
 
 labels = [
@@ -180,8 +209,9 @@ end
 for i in [2,3,4,6,7,8]
     rowsize!(fig.layout, i, Relative(0.14667))
 end
-
 fig
 
-CairoMakie.save("figures/proportional-error-lambda-split.pdf", fig)
+
+CairoMakie.save("figures/error-netdiv-split.pdf", fig)
+
 
