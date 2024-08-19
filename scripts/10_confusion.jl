@@ -98,17 +98,27 @@ fig
 CairoMakie.save("figures/number-of-shifts-confusion_bayesfactor_and_N_half.pdf", fig)
 
 
-function mean(x::Vector{Float64})
+function mymean(x::Vector{Float64})
     s = sum(x)
     res = s / length(x)
     return(res)
 end
 
-metrics = [
-    "mean false positive ratio            " => mean(fpr),
-    "mean false negative ratio            " => mean(fnr[.!isnan.(fnr)]),
-    "mean false ommission ratio           " => mean(false_ommission_ratio),
-    "mean accuracy                        " => mean(acc),
+function standard_error(x::Vector{Float64})
+    m = mymean(x)
+
+    v = sum((x .- m) .^2) / (length(x)-1)
+    var_mean = v / length(x)
+    se_mean = sqrt(var_mean)
+
+    return(se_mean)
+end
+
+mymetrics = [
+    "mean false positive ratio            " => mymean(fpr),
+    "mean false negative ratio            " => mymean(fnr[.!isnan.(fnr)]),
+    "mean false ommission ratio           " => mymean(false_ommission_ratio),
+    "mean accuracy                        " => mymean(acc),
     "frequency at least one false positive" => sum(fpr .> 0) / length(fpr)
 ]
 
@@ -116,115 +126,19 @@ using Printf
 
 println("Shift criterion: Bayes factor > 10 and N > 0.5")
 #println("Shift criterion: N > 0.5")
-for (name, metric) in metrics
+for (name, metric) in mymetrics
     println(name, "\t", @sprintf "%f" metric)
 end
 
-fnr
 
-fig = Figure()
-ax = Axis(fig[1,1],
-        xscale = Makie.log10,
-        xlabel = "number of taxa",
-        ylabel = "false positive ratio")
-        #yscale = Makie.log10)
-scatter!(ax, df_empirical_bayes[!,:ntaxa], fpr)
-fig
-
-
-## plot metrics by tree size
-
-fig5 = Figure(size = (600, 400));
-
-yt = [0.0, 0.25, 0.50, 0.75, 1.0]
-
-xs = [1,2,3,4]
-xtl = ["(0,50]", "(50,250]", "(250,1000]", "(1000,∞]"]
-
-ax1 = Axis(fig5[1,1], 
-        ylabel = L"\text{mean accuracy}",
-        xgridvisible = false,
-        ygridvisible = false,
-        topspinevisible = false,
-        yticks = yt,
-        xticks = (xs, xtl),
-        xticklabelrotation = pi/2,
-        rightspinevisible = false)
-ax2 = Axis(fig5[1,2], 
-        ylabel = L"\text{mean false positive ratio}",
-        xgridvisible = false,
-        ygridvisible = false,
-        topspinevisible = false,
-        xticks = (xs, xtl),
-        #yticks = yt,
-        xticklabelrotation = pi/2,
-        rightspinevisible = false)
-ax3 = Axis(fig5[1,3], 
-        ylabel = L"\text{mean false negative ratio}",
-        xgridvisible = false,
-        ygridvisible = false,
-        topspinevisible = false,
-        yticks = yt,
-        xticks = (xs, xtl),
-        xticklabelrotation = pi/2,
-        rightspinevisible = false)
-        
-ylims!(ax1, (0.0, 1.0))
-#ylims!(ax2, (0.0, 0.001))
-ylims!(ax3, (0.0, 1.0))
-
-
-function metrics(df, ntaxa_lower, ntaxa_upper)
-    df = deepcopy(df)
-    df = subset(df,
-        :ntaxa =>  x -> x .> ntaxa_lower,
-    )
-    df = subset(df,
-        :ntaxa =>  x -> x .<= ntaxa_upper,
-    )
-
-    fp = df[!,"false positive"]
-    fn = df[!,"false negative"]
-    tp = df[!,"true positive"]
-    tn = df[!,"true negative"]
-    fpr = fp ./ (fp .+ tn)
-    fnr = fn ./ (tp .+ fn)
-
-    fnr = fnr[.!isnan.(fnr)]
-
-    acc = (tp .+ tn) ./ (tp .+ tn .+ fp .+ fn)
-
-    mean_acc = mean(acc)
-    mean_fpr = mean(fpr)
-    mean_fnr = mean(fnr)
-
-    return(mean_acc, mean_fpr, mean_fnr)
-end
-
-ymetrics = zeros(4,3)
-
-ymetrics[1,:] .= metrics(df_empirical_bayes, 0.0, 50.0)
-ymetrics[2,:] .= metrics(df_empirical_bayes, 50.0, 250.0)
-ymetrics[3,:] .= metrics(df_empirical_bayes, 250.0, 1000.0)
-ymetrics[4,:] .= metrics(df_empirical_bayes, 1000.0, 1e20)
-
-barplot!(ax1, xs, ymetrics[:,1], color = "gray")
-barplot!(ax2, xs, ymetrics[:,2], color = "gray")
-barplot!(ax3, xs, ymetrics[:,3], color = "gray")
-
-ylabel = Label(fig5[2, 1:3], L"\text{tree size (tips)}")
-ylabel = Label(fig5[2, 1:3], L"\text{tree size (tips)}")
-fig5
-CairoMakie.save("figures/metrics-with-tree-size.pdf", fig5)
-
-## make bin size
+## make bins for trees as a function of number of taxa
 tree_size_bins = Int64[]
 for nt in df[!,:ntaxa]
-    if (nt < 50)
+    if (nt <= 50)
         push!(tree_size_bins, 1)
-    elseif (nt >= 50) & (nt < 250)
+    elseif (nt > 50) & (nt <= 250)
         push!(tree_size_bins, 2)
-    elseif (nt >= 250) & (nt < 1000)
+    elseif (nt > 250) & (nt <= 1000)
         push!(tree_size_bins, 3)
     elseif  nt > 1000
         push!(tree_size_bins, 4)
@@ -256,277 +170,6 @@ xtl = [
     L"\text{large}"
 ]
 
-
-axs = []
-for (j, metric) in enumerate([:accuracy, :false_positive_ratio, :false_negative_ratio])
-    for i in 1:4
-        if i == 1
-            ylabel = L"\text{accuracy}"
-        else
-            ylabel = ""
-        end
-
-        if j == 3
-            xtl1 = xtl
-        else
-            xtl1 = ["" for _ in 1:4]
-        end
-
-        if j == 1 
-            title = titles[j]
-        else
-            title = ""
-        end
-
-        ax = Axis(
-            fig[j+1,i+1],
-            xgridvisible = false,
-            ygridvisible = false,
-            topspinevisible = false,
-            #ylabel = ylabel,
-            xticklabelrotation = pi/2,
-            #xlabel = L"\text{rate variation}",
-            title = title,
-            xticks = (xt, xtl1),
-            rightspinevisible = false,
-        )
-        
-        df1 = subset(
-            df,
-            :tree_size_bin => x -> x .== i,
-            :inference => x -> x .== "unknown_rates",
-        )
-        
-        values = df1[!,metric]
-        categories = df1[!,:model]
-        d = df1[!,:dodge]
-
-        ## remove NaN, happens for fnr
-        categories = categories[.!isnan.(values)] 
-        d = d[.!isnan.(values)] 
-        values = values[.!isnan.(values)] 
-        
-        CairoMakie.boxplot!(ax, categories, values, 
-            dodge = d,
-            color = map(x->x==1 ? :gray : :orange, d),
-        )
-
-        #ylims!(ax, [0.9, 1.01])
-        push!(axs, ax)
-    end
-end
-
-## extra labels
-overall_title = Label(fig[1, 2:5], L"\text{tree size (number of tips)}")
-xlabel = Label(fig[5, 2:5], L"\text{allowed rate variation}")
-ylabel = Label(fig[2, 1], L"\text{accuracy}", rotation = π/2)
-ylabel = Label(fig[3, 1], L"\text{FPR}", rotation = π/2)
-ylabel = Label(fig[4, 1], L"\text{FNR}", rotation = π/2)
-
-
-for ax in axs[1:4]
-    ylims!(ax, [0.9, 1.01])
-end
-
-for ax in axs[5:8]
-    ylims!(ax, [-0.01,0.01])
-end
-
-for ax in axs[1:4]
-    ylims!(ax, [0.49, 1.01])
-end
-
-linkaxes!(axs[1:4]...)
-linkaxes!(axs[5:8]...)
-linkaxes!(axs[9:12]...)
-
-
-for i in [2,3,4]
-    rowsize!(fig.layout, i, Relative(0.3))
-end
-
-fig
-CairoMakie.save("figures/number-of-shifts-confusion-split.pdf", fig)
-
-
-fig2 = Figure(size = (500, 800));
-xtl = [2, 20, 200, 2000, 20_000]
-xt = log10.(xtl)
-xtl = string.(xtl)
-
-cl_maps = [:blues, :reds, :jet, :greens]
-axs = []
-for i in 1:4
-        
-    df1 = subset(
-        df,
-        #:tree_size_bin => x -> x .== i,
-        :model => x -> x .== i,
-        :inference => x -> x .== "unknown_rates",
-        :criterion => x -> x .== "N_half_and_bayes_factor",
-        #:N_true_sum => x -> x .== 0,
-    )
-
-
-    ax = Axis(fig2[i,1], 
-                    #yscale = Makie.log10,
-                    #xscale = Makie.log10,
-                    xgridvisible = false,
-                    ygridvisible = false,
-                    topspinevisible = false,
-                    xlabel = L"\text{number of taxa}",
-                    ylabel = L"\text{accuracy}",
-                    xticks = (xt, xtl),
-                    #yticks = yt,
-                    rightspinevisible = false)
-    xlims!(ax, (log10(1), log10(100_000)))
-    #ylims!(ax, (0.0, 1.0))
-    push!(axs, ax)
-    hb = CairoMakie.hexbin!(
-        ax, 
-        log10.(df1[!,:ntaxa]), 
-        df1[!,:accuracy],
-        colorscale = log10,
-        colormap = :greens,
-        )
-    Colorbar(fig2[i, 2], hb,
-        label = L"\text{number of trees}",
-        height = Relative(0.5)
-    )    
-end
-linkaxes!(axs...)
-fig2
-
-log10.(df1[!,:ntaxa])
-
-xt = [1, 10, 100, 1000, 10_000]
-fig3 = Figure(size = (800, 600)); 
-xtl = string.(yt)
-
-textpos = [0.25, -0.1, -0.1]
-for (row, metric) in zip(1:3, [:accuracy, :false_positive_ratio, :false_negative_ratio])
-    axs = []
-    ax_counter = 1
-    for category in 1:2
-        for i in 1:4
-            if category == 1
-                df1 = subset(
-                    df,
-                    :tree_size_bin => x -> x .== i,
-                    :inference => x -> x .== "unknown_rates",
-                    #:criterion => x -> x .== "N_half_and_bayes_factor",
-                    :criterion => x -> x .== "bayes_factor_10",
-                )
-            else
-                df1 = subset(
-                    df,
-                    :model => x -> x .== i,
-                    :inference => x -> x .== "unknown_rates",
-                    :criterion => x -> x .== "bayes_factor_10",
-                )
-            end
-
-            for j in 1:2
-                if ax_counter == 1
-                    #ylabel = L"\text{accuracy}"
-                    ylabel = ""
-                else
-                    ylabel = ""
-                end
-
-                ax = Axis(
-                        fig3[row,ax_counter], 
-                        xscale = Makie.pseudolog10,
-                        ylabel = ylabel,
-                        xgridvisible = false,
-                        ygridvisible = false,
-                        topspinevisible = false,
-                        bottomspinevisible = true,
-                        leftspinevisible = ax_counter == 1,
-                        rightspinevisible = false,
-                        xticks = (xt, xtl),
-                )
-
-                if ax_counter > 1
-                    hideydecorations!(ax)
-                end
-
-                hidexdecorations!(ax, ticks = false)
-                push!(axs, ax)
-
-                if j == 1
-                    criterion = x -> x .> 0
-                    color = "gray"
-                else
-                    criterion = x -> x .== 0
-                    color = "orange"
-                end
-
-                df2 = subset(
-                    df1,
-                    :N_true_sum => criterion 
-                )
-
-
-                y = df2[!,metric]
-                y = y[.!isnan.(y)]
-
-                println(length(y))
-
-                if length(y) > 20
-                    hist!(ax, y, direction = :x, color = color)
-                    #mean_acc = string.(mean(y) * 100)[1:4] * "%"
-                    #text!(ax, 2.0, 1.0, text = "mean = $mean_acc")
-                    #text!(ax, 1.0, textpos[row], text = "$mean_acc")
-                end
-
-                ax_counter += 1
-                if ax_counter == 9
-                    ax_counter += 1
-                end
-            end
-        end
-
-    end
-    linkaxes!(axs...)
-
-end
-
-#label = LaTeXString(string(Int64(tree_heights[q])) * raw" Ma"))
-Label(fig3[0, 1:8], L"\text{a) split by tree size}")
-Label(fig3[4, 1:2], L"(2,50]")
-Label(fig3[4, 3:4], L"(50,250]")
-Label(fig3[4, 5:6], L"(250,1000]")
-Label(fig3[4, 7:8], L"(1000,∞)")
-Label(fig3[5, 1:8], L"\text{number of taxa}")
-
-Label(fig3[0, 9:17], L"\text{b) split by model}")
-Label(fig3[4, 10:11], L"\text{tiny}")
-Label(fig3[4, 12:13], L"\text{small}")
-Label(fig3[4, 14:15], L"\text{moderate}")
-Label(fig3[4, 16:17], L"\text{large}")
-Label(fig3[5, 9:17], L"\text{allowed rate variation}")
-
-Label(fig3[1, 0], L"\text{accuracy}", rotation = π/2)
-Label(fig3[2, 0], L"\text{false positive ratio}", rotation = π/2)
-Label(fig3[3, 0], L"\text{false negative ratio}", rotation = π/2)
-
-rowgap!(fig3.layout, 15)
-colgap!(fig3.layout, 3)
-
-for row in 1:3
-    rowsize!(fig3.layout, row, Relative(0.3))
-end
-
-groups = [PolyElement(color = color, strokecolor = :transparent) for color in [:gray, :orange]]
-Legend(fig3[1,5:8], groups, 
-       [L"\geq 1 \text{ rate shifts}", L"\text{no rate shifts}"],
-      )
-
-fig3
-CairoMakie.save("figures/confusion-split.pdf", fig3)
-
-
 shift_or_no_shift = [
     x -> x .== 0,
     x -> x .> 0,
@@ -548,10 +191,12 @@ for metric in [:accuracy, :false_positive_ratio, :false_negative_ratio]
             y = df1[!,metric]
             y = y[.!isnan.(y)]
             value = mean(y)
+            se = standard_error(y)
 
 
             summary_df = DataFrame(
                                 :value => value,
+                                :se => se,
                                 :metric => metric,
                                 :n => size(df1)[1],
                                 :tree_size_bin => taxa_category,
@@ -577,10 +222,12 @@ for metric in [:accuracy, :false_positive_ratio, :false_negative_ratio]
             y = df1[!,metric]
             y = y[.!isnan.(y)]
             value = mean(y)
+            se = standard_error(y)
 
 
             summary_df = DataFrame(
                                 :value => value,
+                                :se => se,
                                 :metric => metric,
                                 :n => size(df1)[1],
                                 :model => model_index,
@@ -632,6 +279,12 @@ for (row, metric) in enumerate(ms)
              strokewidth = 1,
              width = 0.5,
             )
+    errorbars!(ax,
+               df_shift[!,:tree_size_bin] .- 0.25,
+               df_shift[!,:value],
+               df_shift[!,:se],
+               color = :black
+              )
     barplot!(ax, 
              df_no_shift[!,:tree_size_bin] .+ 0.25, 
              df_no_shift[!,:value],
@@ -640,6 +293,12 @@ for (row, metric) in enumerate(ms)
              strokewidth = 1,
              width = 0.5,
             )
+    errorbars!(ax,
+               df_no_shift[!,:tree_size_bin] .+ 0.25,
+               df_no_shift[!,:value],
+               df_no_shift[!,:se],
+               color = :black
+              )
 end
 
 
@@ -675,6 +334,12 @@ for (row, metric) in enumerate(ms)
              strokewidth = 1,
              width = 0.5,
             )
+    errorbars!(ax,
+               df_shift[!,:model] .- 0.25,
+               df_shift[!,:value],
+               df_shift[!,:se],
+               color = :black
+              )
     barplot!(ax, 
              df_no_shift[!,:model] .+ 0.25, 
              df_no_shift[!,:value],
@@ -683,6 +348,13 @@ for (row, metric) in enumerate(ms)
              strokewidth = 1,
              width = 0.5,
             )
+    errorbars!(ax,
+               df_no_shift[!,:model] .+ 0.25,
+               df_no_shift[!,:value],
+               df_no_shift[!,:se],
+               color = :black
+              )
+              
 end
 
 ylims!(axs[1], (0.96, 1.01))
@@ -722,5 +394,6 @@ for col in 1:2
 end
 
 fig4
+
 CairoMakie.save("figures/confusion-split-simple.pdf", fig4)
          
