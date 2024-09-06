@@ -141,7 +141,8 @@ end
 linkaxes!(axs...)
 
 ## fake LABELS
-ylabel = Label(fig[2:8, 1], L"\text{proportional error (speciation rate)}", rotation = π/2)
+ylabel = Label(fig[2:4, 1], L"\text{proportional error (speciation rate)}", rotation = π/2)
+ylabel = Label(fig[6:8, 1], L"\text{proportional error (speciation rate)}", rotation = π/2)
 title1 = Label(fig[1, 2:5], L"\text{a) Simulated trees without rate shifts}")
 title2 = Label(fig[5, 2:5], L"\text{b) Simulated trees with }\geq \text{1 rate shifts}", justification = :bottom)
 

@@ -34,7 +34,9 @@ function foobaz(data, η)
 
     λ, μ = allpairwise(λquantiles, µquantiles)
     model = SSEconstant(λ, μ, η)
-    N = compute_nshifts(model, data)
+    Ds, Fs = backwards_forwards_pass(model, data);
+
+    N = compute_nshifts(model, data, Ds, Fs)
     Nsum = sum(N)
     #r = rates[!, :mean_lambda]
     #r = r[.! isnan.(r)]
@@ -96,7 +98,7 @@ end
 
 
 
-fig = Figure(resolution=(850, 350), fontsize = 16,
+fig = Figure(size=(850, 350), fontsize = 16,
 figure_padding = (5,5,5,5))
 
 
@@ -202,7 +204,8 @@ ax4 = Axis(fig[1,4],
 CairoMakie.lines!(ax4, ηs .* tl, logLs, label = L"\text{alternative}~\eta", color = :black, linestyle = :dash)
  =#
 xlabel1 = Label(fig[2, 1], L"\text{branch index}")
-xlabel2 = Label(fig[2, 2:3], L"\text{prior number of shifts}~(E[N] = \eta t)")
+#xlabel2 = Label(fig[2, 2:3], L"\text{prior number of shifts}~(E[N] = \eta t)")
+xlabel2 = Label(fig[2, 2:3], L"\text{a priori expected number of shifts}~(E[N] = \eta t)")
 
 for i in 1:3
     colsize!(fig.layout, i, Relative(0.33))

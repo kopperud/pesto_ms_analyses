@@ -123,7 +123,7 @@ fig = Figure(); ax = Axis3(fig[1,1], azimuth = 1.6*π); CairoMakie.surface!(ax, 
 logls3_unscaled = zeros(n,m)
 
 μs3 = range(0.01,0.3; length = n)
-ηs3 = range(0.0001,0.1; length = m)
+ηs3 = lrange(0.00001,0.05, m)
 
 prog = ProgressMeter.Progress(n*m, "calculating likelihoods...");
 for (i, μmean) in enumerate(μs3)
@@ -133,7 +133,6 @@ for (i, μmean) in enumerate(μs3)
         ProgressMeter.next!(prog)
     end
 end
-#
 
 
 ## make it top at 0
@@ -247,13 +246,14 @@ ax3 = Axis3(fig[2,2],
            xlabel = L"\text{extinction rate }(\hat{\mu})",
            ylabel = L"\text{shift rate }(\eta)",
            zlabel = L"\text{Δlogl}",
-           azimuth = 0.3*π,
+           azimuth = 1.35*π,
           xgridvisible = false, 
           ygridvisible = false,
           zgridvisible = false,
           viewmode = :stretch,
           title = L"\text{c) speciation rate fixed}",
           protrusions = protrusions,
+          #yreversed = true
           )
 
 CairoMakie.surface!(

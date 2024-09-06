@@ -115,7 +115,7 @@ strong_supported_bf = [
 
 rates[4][rates[4][!,:shift_bf] .> 10, :]
 
-fig = Figure(resolution=(650, 300), fontsize = 14,
+fig = Figure(size=(650, 300), fontsize = 14,
             figure_padding = (5,15,5,5))
 
 ax = Axis(
@@ -189,4 +189,5 @@ end
 
 fig
 #save("figures/choice-of-prior-makie-order100.pdf", fig)
+
 save("figures/choice-of-prior.pdf", fig)

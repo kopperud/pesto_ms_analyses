@@ -3,6 +3,7 @@
 ##    Figure 10 -- false error ratios/accuracy
 ## 
 ###########################################
+
 using CSV
 using DataFrames
 using CairoMakie
@@ -190,7 +191,7 @@ for metric in [:accuracy, :false_positive_ratio, :false_negative_ratio]
                     )
             y = df1[!,metric]
             y = y[.!isnan.(y)]
-            value = mean(y)
+            value = mymean(y)
             se = standard_error(y)
 
 
@@ -221,7 +222,7 @@ for metric in [:accuracy, :false_positive_ratio, :false_negative_ratio]
                     )
             y = df1[!,metric]
             y = y[.!isnan.(y)]
-            value = mean(y)
+            value = mymean(y)
             se = standard_error(y)
 
 
@@ -357,11 +358,18 @@ for (row, metric) in enumerate(ms)
               
 end
 
-ylims!(axs[1], (0.96, 1.01))
-ylims!(axs[4], (0.96, 1.01))
+if false
+    ylims!(axs[1], (0.96, 1.01))
+    ylims!(axs[4], (0.96, 1.01))
 
-ylims!(axs[3], (0.85, 1.01))
-ylims!(axs[6], (0.85, 1.01))
+    ylims!(axs[3], (0.85, 1.01))
+    ylims!(axs[6], (0.85, 1.01))
+else
+    for i in 1:6
+        ylims!(axs[i], (-0.03, 1.03))
+    end
+end
+fig4
 
 linkxaxes!(axs[1:3]...)
 linkxaxes!(axs[4:6]...)

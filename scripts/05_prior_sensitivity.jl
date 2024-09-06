@@ -23,7 +23,9 @@ function foobar(data, n)
     η = optimize_eta(λ, μ, data)
     model = SSEconstant(λ, μ, η)
 
-    N = compute_nshifts(model, data)
+    Ds, Fs = backwards_forwards_pass(model, data);
+
+    N = compute_nshifts(model, data, Ds, Fs)
     Nsum = sum(N)
     return(Nsum)
 end
@@ -49,7 +51,9 @@ function foobaz(data, η)
 
     λ, μ = allpairwise(λquantiles, µquantiles)
     model = SSEconstant(λ, μ, η)
-    N = compute_nshifts(model, data)
+    Ds, Fs = backwards_forwards_pass(model, data);
+
+    N = compute_nshifts(model, data, Ds, Fs)
     Nsum = sum(N)
     #r = rates[!, :mean_lambda]
     #r = r[.! isnan.(r)]
@@ -82,7 +86,7 @@ branch_rates = zeros(length(ns), 464)
     branch_rates[i,:] .= branchrates(primates, n)
 end
 
-fig = Figure(resolution=(550, 300), fontsize = 14,
+fig = Figure(size=(550, 300), fontsize = 14,
             figure_padding = (0,0,0,0))
 
 ax1 = Axis(fig[1,1],
@@ -95,7 +99,7 @@ ax1 = Axis(fig[1,1],
         xscale = Makie.sqrt,
         xticklabelrotation = π/2,
         xticks = ns.^2,
-        ylabel = L"\text{estimated number of shifts}~(\hat{N})",
+        ylabel = L"\text{posterior mean no. shifts}~(\hat{N})",
         #xlabel = L"\text{no. rate categories}~(n^2 = K)"
         )
 CairoMakie.ylims!(ax1, 0.0, 6.2)
@@ -137,4 +141,5 @@ for i in 1:2
     colsize!(fig.layout, i, Relative(1/2))
 end
 fig
-CairoMakie.save("figures/state_and_eta_sensitivity.pdf", fig)
+
+#CairoMakie.save("figures/state_and_eta_sensitivity.pdf", fig)
