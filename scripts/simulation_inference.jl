@@ -41,20 +41,10 @@ end
 Nt = sum(N, dims = (5,6))[1:n_trees,:,:,:,1,1] ./ treelengths
 Nsum = sum(N, dims = (5,6))[:,:,:,:,1,1]
 
-#######################################
-##
-## Test true λ,μ and η
-##
-#######################################
 
 N_estimates = zeros(n_trees, n_heights, n_starting, n_models, 4)
 η_estimates = zeros(n_trees, n_heights, n_starting, n_models, 4)
 
-#######################################
-##
-## Test true λ,μ, and estimating η
-##
-#######################################
 
 r0 = 0.04
 ηtrue = r0 / 50
@@ -84,9 +74,15 @@ params = collect(
     )
 )
 
+#######################################
+##
+## Test true λ,μ and η
+##
+#######################################
 io = open("output/prog.txt","w")
 prog = ProgressMeter.Progress(n_trees * n_heights * n_starting * n_models; desc = "Inference 0: ", output = io)
-Threads.@threads for (i,j,k,m) in params
+#Threads.@threads for (i,j,k,m) in params
+for (i,j,k,m) in params
     data = datasets[i,j,k,m]
     λtrue = models[m].λ
     μtrue = models[m].μ
@@ -101,9 +97,15 @@ Threads.@threads for (i,j,k,m) in params
 end
 close(io)
 
+#######################################
+##
+## Test true λ,μ, and estimating η
+##
+#######################################
 io = open("output/prog.txt","w")
 prog = ProgressMeter.Progress(n_trees * n_heights * n_starting * n_models; desc = "Inference 1: ", output = io)
-Threads.@threads for (i,j,k,m) in params
+#Threads.@threads for (i,j,k,m) in params
+for (i,j,k,m) in params
     data = datasets[i,j,k,m]
     λtrue = models[m].λ
     μtrue = models[m].μ
@@ -120,8 +122,13 @@ Threads.@threads for (i,j,k,m) in params
 end
 close(io)
 
-cbdp = zeros(n_trees, n_heights, n_starting, n_models, 2)
 
+#######################################
+##
+## Test unknown λ,μ, and shift rate
+##
+#######################################
+cbdp = zeros(n_trees, n_heights, n_starting, n_models, 2)
 io = open("output/prog.txt","w")
 prog = ProgressMeter.Progress(n_trees * n_heights * n_starting * n_models, desc = "Inference 2...", output = io)
 #Threads.@threads for (i,j,k,m) in params
