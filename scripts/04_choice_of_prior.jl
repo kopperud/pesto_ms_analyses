@@ -113,7 +113,8 @@ strong_supported_bf = [
     sum(bfactors[i] .> 10) for i in 1:4
 ]
 
-rates[4][rates[4][!,:shift_bf] .> 10, :]
+# second strongly supported shift in guenon clade for the exponential distribution
+rates[3][rates[3][!,:shift_bf] .> 10, :]
 
 fig = Figure(size=(650, 300), fontsize = 14,
             figure_padding = (5,15,5,5))
@@ -177,7 +178,8 @@ ax2 = Axis(
     ygridvisible = false,
     title = "c)",
     titlealign = :left,
-    ylabel = L"\text{number of shifts}~(\hat{N})",
+    #ylabel = L"\text{number of shifts}~(\hat{N})",
+    ylabel = L"\text{posterior mean shifts}~(\hat{N})",
     xticks = ([1,2,3,4], names_latex),
     xticklabelrotation=-π/4,
 )

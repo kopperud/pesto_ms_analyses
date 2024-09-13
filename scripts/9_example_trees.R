@@ -19,7 +19,7 @@ make_shiftplot <- function(tr, limits){
   ## Number of shifts (N)
   p <- ggtree(tr, aes(color = nshift)) +
     scale_colour_gradient("", low = "gray", high = "red", limits = limits) +
-    theme(legend.pos = c(0.125, 0.875))
+    theme(legend.position = "inside", legend.position.inside = c(0.125, 0.875))
     #ggtitle()
   return(p)
 }
@@ -32,7 +32,7 @@ make_divplot <- function(tr, limits){
   p <- ggtree(tr, aes(color = r)) +
 
     scale_colour_gradient("", low = "gray", high = "#619CFF", limits = limits) +
-    theme(legend.pos = c(0.125, 0.875))
+    theme(legend.position = "inside", legend.position.inside = c(0.125, 0.875))
   #ggtitle()
   return(p)
 }
@@ -94,8 +94,11 @@ p1d <- make_divplot(tr2, r_min_max) + ggtitle("inferred net-diversification")
 lower_panel <- p1a + p1b + p1c + p1d +
   plot_layout(ncol = 4, guides = "keep", tag_level = "new")
 
-upper_panel / lower_panel +
-  plot_annotation(tag_levels = c("a","1"), tag_suffix = ")")
+p <- upper_panel / lower_panel +
+  plot_annotation(tag_levels = c("a","1"), tag_suffix = ")") 
+
+#  theme(legend.position.inside = c(0.1, 0.8))
+
 
 ggtree(tr2, aes(color = log(shift_bf)))
 ggtree(tr2, aes(color = nshift))
@@ -103,15 +106,4 @@ tr2@data[tr2@data$shift_bf > 10,]
 tr1@data[sapply(tr1@data$N, sum) > 0.5,]
 
 ggsave("figures/tree_examples.pdf", height = 225, width = 270, units = "mm")
-
-
-
-## calculate the netdivs
-r1 <- c(0.04, 0.05, 0.06)
-r2 <- c(0.04, 0.08, 0.12)
-
-#rowSums()
-Nsum <- matrix(Reduce("+", tr1@data$N), 3,3)
-
-Nsum
 

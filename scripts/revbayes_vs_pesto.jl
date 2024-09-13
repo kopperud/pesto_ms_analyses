@@ -106,7 +106,7 @@ new_df = new_df[not_nan,:]
 ## making the figure
 ##
 ##############################
-fig = Figure(size=(620, 250), fontsize = 14,
+fig = Figure(size=(620, 220), fontsize = 14,
             figure_padding = (0,2,5,0));
 
 ax1 = Axis(fig[1,1],
@@ -192,7 +192,7 @@ CairoMakie.lines!(
 fig
 
 ## saving to file
-#CairoMakie.save("figures/rb_vs_pesto.pdf", fig)
+CairoMakie.save("figures/rb_vs_pesto.pdf", fig)
 #CairoMakie.save("/tmp/rb_vs_pesto_with_variance.pdf", fig)
 
 fig3 = Figure(size=(300, 250), fontsize = 14,

@@ -140,4 +140,4 @@ for (i in seq_along(subdirs)){
   }
 }
 df1 <- bind_rows(l)
-#write.csv(df1, file = "output/branch_specific_estimation_error.csv")
+write.csv(df1, file = "output/branch_specific_estimation_error.csv")
