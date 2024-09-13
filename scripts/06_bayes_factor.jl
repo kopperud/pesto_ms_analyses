@@ -80,7 +80,7 @@ models = [SSEconstant(λ, μ, rate) for rate in ηs]
 n_edges = length(primates.branch_lengths)
 
 ps = zeros(n_etas, n_edges)
-prog = ProgressMeter.Progress(n_etas, "calculating...")
+prog = ProgressMeter.Progress(n_etas, "calculating...");
 for i in 1:n_etas
     ps[i,:] = posterior_prior_shift_odds(models[i], primates)
     next!(prog)
@@ -104,19 +104,18 @@ figure_padding = (5,5,5,5))
 
 ax1 = Axis(
         fig[1,1],
-        #xlabel = L"\text{branch index}", 
         ylabel = L"\text{Bayes factor (}\geq 1~\text{shifts)}",
         rightspinevisible = false,
         topspinevisible = false,
         xgridvisible = false,
         ygridvisible = false,
         yscale = CairoMakie.log10,
-        title = "a)",
+        title = L"\text{a)}",
         titlealign = :left,
         #xticks = [0.0, 0.25, 0.5, 0.75, 1.0],
-        yticks = [0.3, 1.0, 3.2, 10.0]
+        yticks = [0.3, 1.0, 3.2, 10.0, 100.0, 1000.0]
         )
-ylims!(ax1, minimum(posterior_prior_odds).*0.5, maximum(posterior_prior_odds)*10)
+ylims!(ax1, minimum(posterior_prior_odds).*0.5, maximum(posterior_prior_odds)*15)
 
 n_edges = length(primates.branch_lengths)
 CairoMakie.scatter!(ax1, 1:n_edges, posterior_prior_odds, 
@@ -135,21 +134,18 @@ for (level, label, c) in zip(levels, labels, colors)
     append!(ls, [l])
 end
 CairoMakie.axislegend(ax1, reverse(ls), reverse(labels), position = :lt, framevisible = false)#; merge = true, unique = true, position = :lt)
-#Legend(fig[1,1], [reverse(ls)...], labels, nbanks = 1, framevisible = false)
        
 
 ax2 = Axis(
         fig[1,2],
-        #xlabel = L"\text{shift rate}~(\eta)", 
         ylabel = L"\text{no. supported branches}",
-        #xlabel = L"\text{expected number of shifts}~(E[N] = \eta t)",
         rightspinevisible = false,
         topspinevisible = false,
         xgridvisible = false,
         ygridvisible = false,
         xscale = CairoMakie.log10,
         xticklabelrotation = π/2,
-        title = "b)",
+        title = L"\text{b)}",
         titlealign = :left,
         yticks = [0,2,4,6,8,10],
         xticks = round.(ηtl; digits = 2),
@@ -170,41 +166,21 @@ ax3 = Axis(fig[1,3],
         ygridvisible = false,
         xscale = Makie.log10,
         yscale = Makie.log10,
-        title = "c)",
+        title = L"\text{c)}",
         titlealign = :left,
         xticklabelrotation = π/2,
         xticks = round.(ηtl; digits = 2),
         yticks = round.(ηtl; digits = 2),
         ylabel = L"\text{posterior number of shifts}~(\hat{N})",
-        #xlabel = L"\text{expected number of shifts}~(E[N] = \eta t)"
         )
-#CairoMakie.scatter!(ax3, ηtl, Nhats, label = "shifts", color = :black, markerstrokewidth = 1)
 CairoMakie.lines!(ax3, [1.0, 100.0], [1.0, 100.0], label = L"\text{identity line}", color = :black, linestyle = :dash)
 CairoMakie.lines!(ax3, ηtl, Nhats, label = L"\text{alternative}~\eta", color = :black)
 CairoMakie.plot!(ax3, [η*tl], [foobaz(primates, η)], label = L"\text{MLE}~\eta", 
                 color = :white, strokewidth = 1)
 CairoMakie.axislegend(ax3, merge = true, unique = true, position = :lt, framevisible = false)
 
-#= 
-ax4 = Axis(fig[1,4],
-        rightspinevisible = false,
-        topspinevisible = false,
-        xgridvisible = false, 
-        ygridvisible = false,
-        xscale = Makie.log10,
-        #yscale = Makie.log10,
-        title = "c)",
-        titlealign = :left,
-        xticklabelrotation = π/2,
-        #yticks = round.(ηtl; digits = 2),
-        xticks = round.(ηtl; digits = 2),
-        #yticks = round.(ηtl; digits = 2),
-        ylabel = L"\text{estimated number of shifts}~(\hat{N})",
-        )
-CairoMakie.lines!(ax4, ηs .* tl, logLs, label = L"\text{alternative}~\eta", color = :black, linestyle = :dash)
- =#
+
 xlabel1 = Label(fig[2, 1], L"\text{branch index}")
-#xlabel2 = Label(fig[2, 2:3], L"\text{prior number of shifts}~(E[N] = \eta t)")
 xlabel2 = Label(fig[2, 2:3], L"\text{a priori expected number of shifts}~(E[N] = \eta t)")
 
 for i in 1:3

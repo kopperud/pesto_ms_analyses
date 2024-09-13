@@ -362,6 +362,9 @@ if false
     ylims!(axs[1], (0.96, 1.01))
     ylims!(axs[4], (0.96, 1.01))
 
+    ylims!(axs[2], (0.00, 0.00015))
+    ylims!(axs[5], (0.00, 0.00015))
+
     ylims!(axs[3], (0.85, 1.01))
     ylims!(axs[6], (0.85, 1.01))
 else
@@ -403,5 +406,6 @@ end
 
 fig4
 
-CairoMakie.save("figures/confusion-split-simple.pdf", fig4)
+#CairoMakie.save("figures/confusion-split-simple.pdf", fig4)
+#CairoMakie.save("figures/confusion-split-simple_ylimit_01.pdf", fig4)
          
