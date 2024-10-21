@@ -11,14 +11,14 @@ The simulation analyses are done in the following files:
 
 ## Reproduce figures
 
-Once these are ran, one can reproduce Figures 2-11 in the main text using the scripts prefixed 2-11. Figure 1 is a TiKz figure, and we don't add the code to actually plot it, but we include a script to calculate the probability densities along the branches of the three-taxon tree.
+Once these are ran, one can reproduce Figures 1 & 4-12 in the main text using the scripts with the number prefix. Figure 2 is a TiKz figure, and we don't add the code to actually plot it, but we include a script to calculate the probability densities along the branches of the three-taxon tree.
 
 ## How to run scripts
 
 In order to run the scripts, you will need:
 * An up-to-date version of R, with several packages (i.e. treeio, ggtree, tidytree, dplyr etc.)
 * An up-to-date version of Julia, with the modules `Pesto` and `BirthDeathSimulation` installed, and some other modules for importing/exporting files, and making figures (`StatsPlots`and `CairoMakie`).
-* Scripts are ran from the top-level of the repository, in the terminal. For example, to make Fig. 2, you would write: `julia scripts/02_quantiles.jl`
+* Scripts are ran from the top-level of the repository, in the terminal. For example, to make Fig. 1, you would write: `julia scripts/01_quantiles.jl`
 
 ## Exact simulation reproducibility
 
