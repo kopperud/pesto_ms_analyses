@@ -1,12 +1,12 @@
 ## choice of prior distribution on the rates
 using Distributions
 using CairoMakie
-using ProgressMeter
 using Pesto
-using Plots.PlotMeasures
+#using Plots.PlotMeasures
 
 primates_tree = readtree(Pesto.path("primates.tre"))
-primates = SSEdata(primates_tree, 0.635)
+#primates = SSEdata(primates_tree, 0.635)
+primates = SSEdata(primates_tree, 0.62)
 
 H = 0.587405
 

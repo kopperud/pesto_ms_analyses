@@ -1,8 +1,8 @@
 using Distributions
 using RCall
-using StatsPlots
+#using StatsPlots
 using Pesto
-using Optim
+#using Optim
 using LaTeXStrings
 using CSV
 
@@ -13,7 +13,7 @@ using CSV
 ###############################
 treefile = "data/primates.tre"
 phy = Pesto.readtree(treefile)
-num_total_species = 367
+num_total_species = 376
 ρ = length(phy.tip_label) / num_total_species
 primates = SSEdata(phy, ρ)
 
@@ -60,9 +60,12 @@ library(ggplot2)
 library(dplyr)
 
 x <- as_tibble(primates)
-phydf <- merge(x, rates, by = "node")
-phydf$tip.label <- phydf$label
+#phydf <- merge(x, rates, by = "node")
+#rates <- rates[-c(234,465),]
+phydf <- full_join(x, rates, by = "node")
+#phydf$tip.label <- phydf$label
 th <- max(node.depth.edgelength(primates))
+
 
 td_phy <- as.treedata(phydf)
 
