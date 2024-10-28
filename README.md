@@ -11,7 +11,7 @@ The simulation analyses are done in the following files:
 
 ## Reproduce figures
 
-Once these are ran, one can reproduce Figures 1 & 4-12 in the main text using the scripts with the number prefix. Figure 2 is a TiKz figure, and we don't add the code to actually plot it, but we include a script to calculate the probability densities along the branches of the three-taxon tree.
+Once these are ran, one can reproduce Figures 1 & 4-12 in the main text using the scripts with the number prefix. Figures 2 and 3 are TiKz figures, and we don't add the code to actually plot them, but we include a script to calculate the probability densities along the branches of the three-taxon tree (Fig. 2).
 
 ## How to run scripts
 
