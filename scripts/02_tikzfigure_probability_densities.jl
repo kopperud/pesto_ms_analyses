@@ -77,6 +77,7 @@ for (i, F) in Fs
 end
 
 
+Fs[4](0.2) .* Ds[4](0.2)
 
 
 
