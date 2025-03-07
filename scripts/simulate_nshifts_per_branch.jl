@@ -34,7 +34,6 @@ Ss = ancestral_state_probabilities(Ds, Fs);
 analytical_shift_prob = posterior_shift_prob(model, primates)[304]
 
 
-
 function simulate_nshifts_branch(D, St, E, n_times)
     t0, t1 = extrema(D.t)
     
@@ -43,8 +42,10 @@ function simulate_nshifts_branch(D, St, E, n_times)
    
     d = Categorical(St)
 
-    states = Int64[] 
-    push!(states, rand(d))
+    #states = Int64[] 
+    states = zeros(Int64, n_times)
+    #push!(states, rand(d))
+    states[1] = rand(d)
 
     ## Initialize first so there is less memory allocation
     N = Int64[0]
@@ -54,7 +55,7 @@ function simulate_nshifts_branch(D, St, E, n_times)
 
     for step in 1:n_steps
         current_time = t1 + (step-1) * Δt
-        current_state = states[end]
+        current_state = states[step]
         
         F[:] .= 0
         F[current_state] = 1
@@ -69,7 +70,7 @@ function simulate_nshifts_branch(D, St, E, n_times)
             F += ΔΔt .* dF
         end
 
-        P[:] = F .* D(current_time + Δt)
+        P[:] = F .* D(current_time + Δt)[:,2]
         P[:] = P ./ sum(P)
 
         new_state_d = Categorical(P)
@@ -79,36 +80,122 @@ function simulate_nshifts_branch(D, St, E, n_times)
             N[1] += 1
         end
 
-        push!(states, new_state)
+        #push!(states, new_state)
+        states[step+1] = new_state
     end
 
-    return(N[1])
+    return(states, N[1])
 end
 
 ## wrapper that does replicates
 function simulate_nshifts_branch(edge_index, Ds, Fs, E, n, n_replicates)
     N = zeros(Int64, n_replicates)
+    states = zeros(Int64, n, n_replicates)
 
     D = Ds[edge_index]
     F = Fs[edge_index]
 
     t0, t1 = extrema(D.t)
 
-    St = Pesto.ancestral_state_probability(D(t1), F(t1), t1)
+    St = Pesto.ancestral_state_probability(D(t1)[:,2], F(t1)[:,2], t1)
+    println(St)
 
     for i in 1:n_replicates
     #Threads.@threads for i in 1:n_replicates
-        N[i] = simulate_nshifts_branch(D, St, E, n)
+        states1, N1 = simulate_nshifts_branch(D, St, E, n)
+
+        N[i] = N1
+        states[:,i] = states1
+
     end
 
-    return(N)
+    return(states, N)
 end
+
+n_time_steps = 100 ## not so important
+n_replicates = 30_000 ## important 
+states, N = simulate_nshifts_branch(304, Ds, Fs, E, n_time_steps, n_replicates)
+
+## variance per time slice/bin
+sim_vars = zeros(n_time_steps)
+for i in 1:n_time_steps
+    sim_vars[i] = var([model.λ[states[i,j]] for j in 1:n_replicates])
+end
+sort(sim_vars)
+
+D = Ds[304]
+F = Fs[304]
+
+theoretical_vars = zeros(n_time_steps)
+times = collect(range(D.t[end], D.t[1]; length = n_time_steps))
+for i in 1:n_time_steps
+    St = Pesto.ancestral_state_probability(D(times[i])[:,2], F(times[i])[:,2], 0.0)
+    first_moment = sum(model.λ .* St)
+    second_moment = sum(model.λ .* model.λ .* St)
+    theoretical_vars[i] = second_moment - first_moment ^2
+end
+
+fig = Figure(size = (800, 350));
+ax1 = Axis(fig[1,1], xlabel = "simulated Var[X(t)]", ylabel = "theoretical Var[X(t)]")
+ax2 = Axis(fig[1,2], xlabel = "time along branch (Ma)", ylabel = "abs(Var (theoretical) - Var (simulated))")
+ax3 = Axis(fig[1,3], xlabel = "time along branch (Ma)", ylabel = "Var[X(t)]")
+lines!(ax1, sim_vars, theoretical_vars, label = "Var[X(t)]")
+lines!(ax2, times, abs.(sim_vars .- theoretical_vars))
+lines!(ax3, times, sim_vars, label = "simulated")
+lines!(ax3, times, theoretical_vars, label = "theoretical")
+ax2.xreversed = true
+ax3.xreversed = true
+axislegend(ax1, position = :lt)
+axislegend(ax3, position = :lt)
+
+fig
+
+means, vars, prob = brvar(model, primates, 304, 8)
+sum(vars .* prob)
+
+## variance of the branch-specific mean
+sim_vars_branch = zeros(n_replicates)
+for i in 1:n_replicates
+    branch_mean = mean([model.λ[states[j,i]] for j in 1:n_time_steps])
+    sim_vars_branch[i] = branch_mean
+end
+sim_vars_branch
+
+theoretical_vars_branch = 0.0
+for j in 1:n_time_steps
+    t = times[j]
+    St = Pesto.ancestral_state_probability(D(t)[:,2], F(t)[:,2], 0.0)
+    ## 1st moment
+    m1 = sum(model.λ .* St)
+    ## 2nd moment
+    m2 = sum(model.λ .* model.λ .* St)
+    
+    ## var (assuming independence)
+    v = m2 - m1^2
+    theoretical_vars_branch += v / (n_time_steps^2)
+end
+theoretical_vars_branch
+var(sim_vars_branch)
+
+var(sim_vars_branch) / theoretical_vars_branch
+theoretical_vars_branch / var(sim_vars_branch)
+
+## calculate covariance
+t1 = 30.0
+t2 = 25.0
+S1 = Pesto.ancestral_state_probability(D(t1)[:,2], F(t1)[:,2], 0.0)
+S2 = Pesto.ancestral_state_probability(D(t2)[:,2], F(t2)[:,2], 0.0)
+
+E1 = sum(S1 .* model.λ)
+E2 = sum(S2 .* model.λ)
+
+sum([(model.λ[i] - E1)*(model.λ[j] - E2)*S1[i]*S2[j] for i in 1:4, j in 1:4])
 
 
 
 n_steps = [10, 25, 50, 100, 150, 300, 500, 1000, 2500, 5000, 10_000]
 
-n_replicates = 100_000
+n_replicates = 10_000
 
 N = zeros(Int64, length(n_steps), n_replicates)
 for (i, n) in enumerate(n_steps)
@@ -117,6 +204,8 @@ for (i, n) in enumerate(n_steps)
     res = simulate_nshifts_branch(304, Ds, Fs, E, n, n_replicates)
     N[i,:] .= res
 end
+
+
 
 fig = Figure();
 xtl = ["$n" for n in n_steps]
@@ -145,7 +234,7 @@ axislegend(ax, position = :rt)
 ylims!(ax, (0.96, 0.98))
 fig
 
-save("figures/stochastic_mapping_vs_differential_equation.pdf", fig)
+#save("figures/stochastic_mapping_vs_differential_equation.pdf", fig)
 fig
 
 
